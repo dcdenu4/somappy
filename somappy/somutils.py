@@ -31,8 +31,8 @@ def default_radius(som_grid):
               [ [0,0] , [1,0] ] ]            
     
     Returns:
-        A float value representing a distance that covers 2/3 of all unit-to-unit
-        distances.    
+        A float value representing a distance that covers 2/3 of all 
+        unit-to-unit distances.    
     """
     # Get the dimensions of the SOM grid / map
     grid_shape = som_grid.shape
@@ -103,7 +103,9 @@ def decay_func(initial_value, end_value, current_step, total_steps):
     #return initial_value * np.exp(decay_rate * total_steps)
     
     # Return value along linear decay function
-    return initial_value - ((initial_value - end_value) / total_steps) * current_step
+    return (
+        initial_value - 
+        ((initial_value - end_value) / total_steps) * current_step
     
     
 def calculate_influence(distance, radius):
@@ -170,7 +172,8 @@ def find_bmu(target, som_net):
     for x in range(rows):
         for y in range(cols):
             weight_vector = som_net[x, y, :].reshape(vector_len, 1)
-            # Don't bother with actual Euclidean distance, to avoid expensive sqrt operation
+            # Don't bother with actual Euclidean distance, to avoid expensive 
+            # sqrt operation
             sq_dist = np.sum((weight_vector - target) ** 2)
             if sq_dist < min_dist:
                 # BMU so far, update min distance, BMU index, BMU weights
@@ -197,12 +200,15 @@ def normalize(data_df, subset=None):
     """
     if subset is None:
         # Normalize all columns in dataframe
-        data_norm_df = (data_df - data_df.min(0)) / (data_df.max(0) - data_df.min(0))
+        data_norm_df = (
+            (data_df - data_df.min(0)) / (data_df.max(0) - data_df.min(0)))
     else:
         # Get the subset of columns to normalize
         data_sub_df = data_df[subset]
         # Normalize subset of columns
-        data_sub_norm_df = (data_sub_df - data_sub_df.min(0)) / (data_sub_df.max(0) - data_sub_df.min(0))
+        data_sub_norm_df = (
+            (data_sub_df - data_sub_df.min(0)) / 
+            (data_sub_df.max(0) - data_sub_df.min(0)))
         # Copy full dataframe so as to avoid mutation
         data_norm_df = data_df.copy()
         # Update the full dataframe with the normalized values for the subsets
@@ -276,7 +282,9 @@ def create_grid(nrows, ncols, grid_type='square'):
         
     return map_coords
         
-def run_som(data, som_grid, grid_type, niter, radius_param, alpha_param, keep_dist=True):
+def run_som(
+    data, som_grid, grid_type, niter, radius_param, alpha_param, 
+    keep_dist=True):
     """Self Organized Map algorithm.
     
     Run data through a Self Organizing Map (SOM) algorithm. The SOM 
@@ -367,7 +375,8 @@ def run_som(data, som_grid, grid_type, niter, radius_param, alpha_param, keep_di
         bmu, bmu_idx = find_bmu(rand_samp, som_weights)
         
         # Track the distances of objects to their corresponding winning unit
-        # don't bother with actual Euclidean distance, to avoid expensive sqrt operation
+        # don't bother with actual Euclidean distance, to avoid expensive sqrt
+        # operation
         dist_tmp = np.sum((bmu - rand_samp) ** 2)
         # Saving the BMU for this sample by saving the distance and index
         object_distances[rand_samp_idx] = (dist_tmp, bmu_idx)
@@ -382,7 +391,8 @@ def run_som(data, som_grid, grid_type, niter, radius_param, alpha_param, keep_di
         # to their 2-D distance from the BMU
         for x in range(map_rows):
             for y in range(map_cols):
-                # Get the 2-D distance (again, not the actual Euclidean distance)
+                # Get the 2-D distance (again, not the actual Euclidean 
+                # distance)
                 if grid_type != 'hex':
                     w_dist = np.sum((np.array([x, y]) - bmu_idx) ** 2)
                 else:
@@ -396,7 +406,8 @@ def run_som(data, som_grid, grid_type, niter, radius_param, alpha_param, keep_di
                     node_weight = som_weights[x, y, :].reshape(num_feats, 1)
                     # NOTE: Currently keeping influence set at 1, meaning no 
                     # decaying based on distance
-                    # Calculate the degree of influence (based on the 2-D distance)
+                    # Calculate the degree of influence 
+                    # (based on the 2-D distance)
                     #influence = calculate_influence(w_dist, r)
                     influence = 1
                     # Now update the neuron's (unit) weight using the formula:
@@ -500,7 +511,8 @@ def fill_bmu_distances(data, som_weights, object_distances=None):
             bmu, bmu_idx = find_bmu(none_samp, som_weights)
 
             # Track the distances of objects to their corresponding winning unit
-            # don't bother with actual Euclidean distance, to avoid expensive sqrt operation
+            # don't bother with actual Euclidean distance, to avoid expensive 
+            # sqrt operation
             dist_tmp = np.sum((bmu - none_samp) ** 2)
             filled_objects.append((dist_tmp, bmu_idx))
 
@@ -528,7 +540,8 @@ def map_cluster_to_class(class_df_path, cluster_df_path):
         
     return None
     
-def save_cluster_results(dframe, results_path, cluster_labels, grid_dim, object_distances):
+def save_cluster_results(
+    dframe, results_path, cluster_labels, grid_dim, object_distances):
     """Determine the cluster assignment for each data sample and save to CSV. 
     
     Parameters:
@@ -572,7 +585,9 @@ def save_cluster_results(dframe, results_path, cluster_labels, grid_dim, object_
     dframe_merge = dframe_copy.merge(cluster_df, how='left', left_index=True, right_index=True)
     dframe_merge.to_csv(results_path)
     
-def basic_som_figure(data, som_weights, map_coords, cluster_labels, grid, figure_path, dframe=None, class_name=None):
+def basic_som_figure(
+    data, som_weights, map_coords, cluster_labels, grid, figure_path, 
+    dframe=None, class_name=None):
     """Creates and returns a plot for the SOM.
     
     Creates a plot of the SOM based on the coordinates generated during the 
@@ -618,7 +633,8 @@ def basic_som_figure(data, som_weights, map_coords, cluster_labels, grid, figure
         Saves the plot to 'figure_path' and returns the Pyplot. 
 
     """
-    default_colors = ['blue', 'green', 'red', 'cyan', 'magenta', 'yellow', 'black', 'white']
+    default_colors = [
+        'blue', 'green', 'red', 'cyan', 'magenta', 'yellow', 'black', 'white']
     
     x_loc = map_coords[:,:,0]
     y_loc = map_coords[:,:,1]
@@ -635,7 +651,9 @@ def basic_som_figure(data, som_weights, map_coords, cluster_labels, grid, figure
             group = cluster_labels[color_idx]
             #print(group)
             #print(color_idx)
-            hex = patches.RegularPolygon((xc,yc), numVertices=6, radius=hex_radius, alpha=0.5, edgecolor='k', facecolor=default_colors[group])
+            hex = patches.RegularPolygon(
+                (xc,yc), numVertices=6, radius=hex_radius, alpha=0.5, 
+                edgecolor='k', facecolor=default_colors[group])
             axs.add_patch(hex)
             color_idx+=1
             
@@ -649,10 +667,14 @@ def basic_som_figure(data, som_weights, map_coords, cluster_labels, grid, figure
         legend_patch = []
         print(np.unique(cluster_labels))
         for item in np.unique(cluster_labels):
-            item_patch = patches.Patch(color=default_colors[item], label='Cluster %s' % item)
+            item_patch = patches.Patch(
+                color=default_colors[item], label='Cluster %s' % item)
             legend_patch.append(item_patch)
             
-        axs.legend(handles=legend_patch, loc='upper center', bbox_to_anchor=(0.5, 1.2), ncol=int(math.ceil(len(legend_patch) / 2.0)))
+        axs.legend(
+            handles=legend_patch, loc='upper center', 
+            bbox_to_anchor=(0.5, 1.2), 
+            ncol=int(math.ceil(len(legend_patch) / 2.0)))
         
     if dframe is not None:
         num_segments = data.shape[0]
@@ -666,9 +688,11 @@ def basic_som_figure(data, som_weights, map_coords, cluster_labels, grid, figure
             unique_classes = np.unique(class_values)
             cmap_name = 'tab10'
             cmap = plt.get_cmap(cmap_name)
-            classes_norm = colors.Normalize(vmin=np.min(unique_classes), vmax=np.max(unique_classes))
+            classes_norm = colors.Normalize(
+                vmin=np.min(unique_classes), vmax=np.max(unique_classes))
             
-            text_colors = ["blue", "yellow", "orange", "red", "green", "purple"]
+            text_colors = [
+                "blue", "yellow", "orange", "red", "green", "purple"]
         
         for i in range(num_segments):
             t = data[i, :].reshape(np.array([num_feats, 1]))
@@ -692,11 +716,10 @@ def basic_som_figure(data, som_weights, map_coords, cluster_labels, grid, figure
     plt.savefig(figure_path)
     return plt
     
-def create_som_figure(data, segment_df, som_weights, map_coords, cluster_labels, grid):
+def create_som_figure(
+    data, segment_df, som_weights, map_coords, cluster_labels, grid):
     """
     """
-    
-        
     color_map = ['blue', 'red', 'black', 'cyan', 'green', 'magenta', 'white']
     #fig = plt.figure()
     x_loc = map_coords[:,:,0]
@@ -712,7 +735,9 @@ def create_som_figure(data, segment_df, som_weights, map_coords, cluster_labels,
         patch_collection = []
         for xc, yc, in zip(x_loc.flatten(), y_loc.flatten()):
             group = cluster_labels[color_idx]
-            hex = patches.RegularPolygon((xc,yc), numVertices=6, radius=hex_radius, alpha=0.5, edgecolor='k', facecolor=color_map[group])
+            hex = patches.RegularPolygon(
+                (xc,yc), numVertices=6, radius=hex_radius, alpha=0.5, 
+                edgecolor='k', facecolor=color_map[group])
             #print(hex.get_path())
             #print(hex.get_patch_transform())
             #print(hex.xy)
@@ -796,8 +821,8 @@ def save_som_model(som_weights, som_path, grid_type, cluster=None):
               [ [0.1,0.9,0.9] , [0.7,0.6,0.5] ] ]
         'som_path' (string) - a path on disk to save the model to as a txt
             file. Path should end with a '.txt' extension.
-        'grid_type' (string) - 'hex' or 'square'. The grid type that was used when 
-            creating the SOM map/lattice.
+        'grid_type' (string) - 'hex' or 'square'. The grid type that was used 
+            when creating the SOM map/lattice.
         'cluster' (int) (optional) - number of clusters used when originally
             clustering the SOM.
     Returns:
@@ -811,7 +836,7 @@ def save_som_model(som_weights, som_path, grid_type, cluster=None):
     if cluster == None:
         footer_info = "{'shape':%s,'grid_type'%s}" % (str(som_shape), grid_type)
     else:
-        footer_info = "{'shape':%s,'grid_type':%s,'cluster':%s}" % (str(som_shape), grid_type, cluster)
+        footer_info = "{'shape':%s,'grid_type':%s,'cluster':%s}", (str(som_shape), grid_type, cluster)
     
     np.savetxt(som_path, som_flattened, footer=footer_info)
     
