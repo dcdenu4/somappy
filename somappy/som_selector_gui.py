@@ -2,10 +2,7 @@ import sys
 import os
 import shutil
 
-if sys.version_info[0] >= 3:
-    import PySimpleGUI as sg
-else:
-    import PySimpleGUI27 as sg
+import PySimpleGUI as sg
 
 import matplotlib
 matplotlib.use('TkAgg')
@@ -75,21 +72,25 @@ validated = False
 layout = [[sg.Text('SOM Selector Tool', size=(30, 1), font=("Helvetica", 14))],      
 [sg.Text('_'  * 100, size=(70, 1))],
 [sg.Text('Workspace:', size=(25, 1), auto_size_text=True, justification='right'), 
-    #sg.InputText(default_text='Y:/EPSCoR/My-Project/Data/som_selector_wkspace', do_not_clear=True, key='_output_dir_path_'),
     sg.InputText(do_not_clear=True, key="_output_dir_path_"),
     sg.FolderBrowse()],
 [sg.Text('_'  * 100, size=(70, 1))],    
 [sg.Text('SOM Input Features:', size=(25, 1), auto_size_text=True, justification='right'), 
-    sg.InputText(default_text='Y:/EPSCoR/My-Project/Data/Kristen/SedRegDataV2g-Copy.csv', do_not_clear=True, key="_som_input_path_"),
+    sg.InputText(do_not_clear=True, key="_som_input_path_"),
     sg.FileBrowse()],
 [sg.Text('SOM Parameters:', size=(25, 1), auto_size_text=True, justification='right'), 
-    sg.InputText(default_text='Y:/EPSCoR/My-Project/Data/test_sample_data/som_classified_clusters.csv', do_not_clear=True, key='_som_params_path_'),
+    sg.InputText(do_not_clear=True, key='_som_params_path_'),
     sg.FileBrowse()],
-[sg.Text('SOM Columns:', size=(25, 1), auto_size_text=True, justification='right'), sg.InputText(do_not_clear=True, key='_columns_')],
-[sg.Text('SOM Rows:', size=(25, 1), auto_size_text=True, justification='right'), sg.InputText(do_not_clear=True, key='_rows_')],
-[sg.Text('SOM Iterations:', size=(25, 1), auto_size_text=True, justification='right'), sg.InputText(default_text='500', do_not_clear=True, key='_iterations_')],
-[sg.Text('SOM Grid Type:', size=(25, 1), auto_size_text=True, justification='right'), sg.InputCombo(['hex', 'square'], default_value=0, key='_grid_type_')],
-[sg.Text('Number of Clusters:', size=(25, 1), auto_size_text=True, justification='right'), sg.InputText(do_not_clear=True, key='_number_clusters_')],
+[sg.Text('SOM Columns:', size=(25, 1), auto_size_text=True, justification='right'), 
+    sg.InputText(do_not_clear=True, key='_columns_')],
+[sg.Text('SOM Rows:', size=(25, 1), auto_size_text=True, justification='right'), 
+    sg.InputText(do_not_clear=True, key='_rows_')],
+[sg.Text('SOM Iterations:', size=(25, 1), auto_size_text=True, justification='right'), 
+    sg.InputText(default_text='500', do_not_clear=True, key='_iterations_')],
+[sg.Text('SOM Grid Type:', size=(25, 1), auto_size_text=True, justification='right'), 
+    sg.InputCombo(['hex', 'square'], default_value=0, key='_grid_type_')],
+[sg.Text('Number of Clusters:', size=(25, 1), auto_size_text=True, justification='right'), 
+    sg.InputText(do_not_clear=True, key='_number_clusters_')],
 
 [sg.Text('', text_color=None, background_color=None, size=(70, 1), key='_success_message_')],
 [sg.Submit(), sg.Cancel(key='_cancel_')]]

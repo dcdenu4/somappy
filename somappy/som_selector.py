@@ -81,7 +81,7 @@ def execute(args):
     init_radius = somutils.default_radius(som_grid)
 
     # Get the data as a matrix dropping the dataframe wrapper
-    data = selected_feats_df_norm.as_matrix()
+    data = selected_feats_df_norm.values
 
     # Number of iterations to run SOM
     niter = int(args['_iterations_'])
@@ -89,28 +89,34 @@ def execute(args):
     nclusters = int(args['_number_clusters_'])
 
     # Run SOM
-    som_weights, object_distances = somutils.run_som(data, som_grid, grid_type, niter, init_radius, init_learning_rate)
+    som_weights, object_distances = somutils.run_som(
+        data, som_grid, grid_type, niter, init_radius, init_learning_rate)
     # Save SOM model. This is done by saving the weights (numpy ndarray)
     som_model_weights_path = os.path.join(workspace_dir, 'som_model.txt')
-    somutils.save_som_model(som_weights, som_model_weights_path, grid_type, cluster=nclusters)
+    somutils.save_som_model(
+        som_weights, som_model_weights_path, grid_type, cluster=nclusters)
     #np.save(som_model_weights_path, som_weights)
 
     # It's possible that some data samples were not selected for training, thus do
     # do not have a latest bmu
-    object_distances = somutils.fill_bmu_distances(data, som_weights, object_distances)
+    object_distances = somutils.fill_bmu_distances(
+        data, som_weights, object_distances)
 
     # Cluster SOM nodes
     clustering = somutils.cluster_som(som_weights, nclusters)
 
     # Let's save the clusters corresponding to the samples now
     results_path = os.path.join(workspace_dir, 'cluster_results.csv')
-    somutils.save_cluster_results(selected_data_feats_df, results_path, clustering.labels_, (nrows, ncols), object_distances)
+    somutils.save_cluster_results(
+        selected_data_feats_df, results_path, clustering.labels_, 
+        (nrows, ncols), object_distances)
     # Display the SOM, coloring the nodes into different clusters from 
     # 'clustering' above
     # Optional: pass in original dataframe to plot 
     # the IDs onto their respective nodes
     som_figure_path = os.path.join(workspace_dir, 'som_figure.jpg')
-    plt = somutils.basic_som_figure(data, som_weights, som_grid, clustering.labels_,
-                                grid_type, som_figure_path, dframe=data_dataframe, class_name='class')
+    plt = somutils.basic_som_figure(
+        data, som_weights, som_grid, clustering.labels_, grid_type, 
+        som_figure_path, dframe=data_dataframe, class_name='class')
                                 
     return {'model_weights_path':som_model_weights_path, 'som_figure':plt.gcf()}
