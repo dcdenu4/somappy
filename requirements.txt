@@ -5,3 +5,4 @@ scikit-image
 pandas>1
 matplotlib
 pysimplegui
+pygeoprocessing>=1.9.2,<2
