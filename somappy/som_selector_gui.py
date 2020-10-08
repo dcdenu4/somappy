@@ -7,7 +7,7 @@ import PySimpleGUI as sg
 import matplotlib
 matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasAgg
-import matplotlib.backends.tkagg as tkagg
+import matplotlib.backends.backend_tkagg as tkagg
 import tkinter as Tk
 
 #printsq = sg.Print
