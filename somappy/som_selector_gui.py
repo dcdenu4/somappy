@@ -4,11 +4,11 @@ import shutil
 
 import PySimpleGUI as sg
 
-import matplotlib
-matplotlib.use('TkAgg')
-from matplotlib.backends.backend_tkagg import FigureCanvasAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.backends.backend_tkagg as tkagg
 import tkinter as Tk
+import matplotlib
+matplotlib.use('TkAgg')
 
 #printsq = sg.Print
 #sg.ChangeLookAndFeel('GreenTan')
@@ -20,7 +20,7 @@ def draw_figure(canvas, figure, loc=(0, 0)):
     loc: location of top-left corner of figure on canvas in pixels.
     Inspired by matplotlib source: lib/matplotlib/backends/backend_tkagg.py
     """
-    figure_canvas_agg = FigureCanvasAgg(figure)
+    figure_canvas_agg = FigureCanvasTkAgg(figure)
     figure_canvas_agg.draw()
     figure_x, figure_y, figure_w, figure_h = figure.bbox.bounds
     figure_w, figure_h = int(figure_w), int(figure_h)

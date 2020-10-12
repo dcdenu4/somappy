@@ -834,9 +834,9 @@ def save_som_model(som_weights, som_path, grid_type, cluster=None):
     som_flattened = som_weights.flatten()
 
     if cluster == None:
-        footer_info = "{'shape':%s,'grid_type'%s}" % (str(som_shape), grid_type)
+        footer_info = f"shape: {som_shape}, grid_type: {grid_type}"
     else:
-        footer_info = "{'shape':%s,'grid_type':%s,'cluster':%s}", (str(som_shape), grid_type, cluster)
+        footer_info = f"shape: {som_shape}, grid_type: {grid_type}, cluster: {cluster}"
 
     np.savetxt(som_path, som_flattened, footer=footer_info)
 
