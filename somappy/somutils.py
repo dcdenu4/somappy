@@ -40,7 +40,7 @@ def default_radius(som_grid):
     rows = grid_shape[0]
     cols = grid_shape[1]
     # The number of units is the columns * rows
-    num_units = rows * columns
+    num_units = rows * cols
     # Create an empty list to track collection of pairwise distances
     unit_dists = []
 
