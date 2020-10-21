@@ -5,7 +5,7 @@ import math
 import sys
 import ast
 
-import numpy as np
+import numpy
 import pandas
 from sklearn.cluster import AgglomerativeClustering
 
@@ -21,8 +21,8 @@ def default_radius(som_grid):
     that covers 2/3 of all unit-to-unit distances.
     https://cran.r-project.org/web/packages/kohonen/kohonen.pdf
 
-    Parameters:
-        'som_grid' (3D numpy array) : a numpy array where the first two
+    Args:
+        som_grid (3D numpy array) : a numpy array where the first two
             dimensions are the row, column of the map and the 3rd
             dimension is a vector representing a [x,y] cartesian coordinate
             for that row, col cell. These [x,y] coordinates will change
@@ -40,7 +40,7 @@ def default_radius(som_grid):
     rows = grid_shape[0]
     cols = grid_shape[1]
     # The number of units is the columns * rows
-    num_units = grid_shape[0] * grid_shape[1]
+    num_units = rows * columns
     # Create an empty list to track collection of pairwise distances
     unit_dists = []
 
@@ -75,11 +75,11 @@ def default_radius(som_grid):
             unit_dists.append(cur_dists)
 
     # Flatten unit_dists into a numpy array; probably could do:
-    # all_dists = np.array(unit_dists).flatten()
-    all_dists = np.array([item for sublist in unit_dists for item in sublist])
+    # all_dists = numpy.array(unit_dists).flatten()
+    all_dists = numpy.array([item for sublist in unit_dists for item in sublist])
 
     # Get 2/3 value by taking the 2/3 percentile of all the distances
-    return np.percentile(all_dists, 67.0)
+    return numpy.percentile(all_dists, 67.0)
 
 
 def decay_func(initial_value, end_value, current_step, total_steps):
@@ -89,18 +89,18 @@ def decay_func(initial_value, end_value, current_step, total_steps):
     the value based on a linear decay. There is room here to add a
     parameter that could do exponential decay values as well.
 
-    Parameters:
-        'initial_value' (float) - the initial value to decay from.
-        'end_value' (float) - the final value to decay to over 'total_steps'.
-        'current_step' (int) - the current step of decay <= total_steps.
-        'total_steps' (int) - the number of total steps of decay.
+    Args:
+        initial_value (float) - the initial value to decay from.
+        end_value (float) - the final value to decay to over 'total_steps'.
+        current_step (int) - the current step of decay <= total_steps.
+        total_steps (int) - the number of total steps of decay.
 
     Returns:
         (float) a value along the decay function
     """
     # Exponential decay:
-    # decay_rate = np.log(end_value / initial_value) / total_steps
-    #return initial_value * np.exp(decay_rate * total_steps)
+    # decay_rate = numpy.log(end_value / initial_value) / total_steps
+    #return initial_value * numpy.exp(decay_rate * total_steps)
 
     # Return value along linear decay function
     return (
@@ -116,7 +116,7 @@ def calculate_influence(distance, radius):
     A distance of 0 should return a 1.0 where as a distance equal to
     radius should return a value close to 0 but not 0.
 
-    Parameters:
+    Args:
         'distance' (float) - a distance value less than or equal to the
             radius
         'radius' (float) - the max value 'distance' could be
@@ -124,27 +124,28 @@ def calculate_influence(distance, radius):
     Returns:
         A float value between 0 and 1 of the decay
     """
-    decay_rate = np.log(0.001 / 1.0) / radius
-    return np.exp(decay_rate * radius)
+    decay_rate = numpy.log(0.001 / 1.0) / radius
+    return numpy.exp(decay_rate * radius)
 
 def find_bmu(target, som_net):
     """Finds the Best Matching Unit (BMU) for a given vector.
 
     A BMU is the smallest Euclidean distance between two vectors. This function
-    finds the BMU between 'target' vector and the SOM maps unit vectors (where
-    the unit vectors represent the weights of the SOM map). The 'target'
-    vector should have the same number of elements as the 'som_net' weights.
+    finds the BMU between ``target`` vector and the SOM maps unit vectors 
+    (where the unit vectors represent the weights of the SOM map). The 
+    ``target`` vector should have the same number of elements as the 
+    ``som_net`` weights.
 
-    Parameters:
-        'target' (1D numpy array): a vector represented as a numpy array. The
+    Args:
+        target (1D numpy array): a vector represented as a numpy array. The
             length of the vector should be the same as the length of the 3rd
-            dimension of the 'som_net'.
+            dimension of the ``som_net``.
 
-        'som_net' (3D numpy array): a numpy array where the first two
+        som_net (3D numpy array): a numpy array where the first two
             dimensions are the row, column of the map and the 3rd
             dimension is a vector representing the unit weights
             for that row, col cell. The unit vector weights should have
-            the same length as the 'target' vector. e.g.
+            the same length as the ``target`` vector. e.g.
             [ [ [0.5,1.0,0.3] , [1.0,0.2,0.6] ],
               [ [0.1,0.9,0.9] , [0.7,0.6,0.5] ] ]
 
@@ -159,11 +160,11 @@ def find_bmu(target, som_net):
     target = target.reshape(vector_len, 1)
 
     # A placeholder for the best BMU index in the SOM net.
-    bmu_idx = np.array([0, 0])
+    bmu_idx = numpy.array([0, 0])
     # A placeholder for the best BMU weight vector
-    bmu = np.zeros((vector_len,1))
+    bmu = numpy.zeros((vector_len,1))
     # Set the initial minimum distance to a huge number
-    min_dist = np.iinfo(np.int).max
+    min_dist = numpy.iinfo(numpy.int).max
     # Rows and Cols of the SOM net
     rows = som_net.shape[0]
     cols = som_net.shape[1]
@@ -174,11 +175,11 @@ def find_bmu(target, som_net):
             weight_vector = som_net[x, y, :].reshape(vector_len, 1)
             # Don't bother with actual Euclidean distance, to avoid expensive
             # sqrt operation
-            sq_dist = np.sum((weight_vector - target) ** 2)
+            sq_dist = numpy.sum((weight_vector - target) ** 2)
             if sq_dist < min_dist:
                 # BMU so far, update min distance, BMU index, BMU weights
                 min_dist = sq_dist
-                bmu_idx = np.array([x, y])
+                bmu_idx = numpy.array([x, y])
                 bmu[:] = weight_vector[:]
 
     # Return the (bmu, bmu_idx) tuple
@@ -190,10 +191,10 @@ def normalize(data_df, subset=None):
         Use the min, max normalization where minimum value is normalized to 0.0
         and maximum values is normalized to 1.0.
 
-        Parameters:
-            'data_df' (pandas data frame) - a dataframe with numeric columns
-            'subset' (list)(optional) - an optional list of named columns
-                in 'data_df' to normalize. Normalize these columns only.
+        Args:
+            data_df (pandas data frame) - a dataframe with numeric columns
+            subset (list)(optional) - an optional list of named columns
+                in ``data_df`` to normalize. Normalize these columns only.
 
         Returns:
             Pandas Data Frame with normalized values
@@ -223,14 +224,14 @@ def create_grid(nrows, ncols, grid_type='square'):
     array. Returned matrix will either represent a hexagonal
     or grid format.
 
-    Parameters:
-        'nrows' (int) - number of rows for the SOM map (and thus matrix)
-        'ncols' (int) - number of columns for the SOM map (and thus matrix)
-        'grid_type' (String) - this determines how distances should be
+    Args:
+        nrows (int) - number of rows for the SOM map (and thus matrix)
+        ncols (int) - number of columns for the SOM map (and thus matrix)
+        grid_type (String) - this determines how distances should be
             calculated for determining neighbors.
             Valid values:
-                'hex' - treat the map as nrows x ncols hexagons
-                'square' (default) - treat the map as a grid of squares
+                hex - treat the map as nrows x ncols hexagons
+                square (default) - treat the map as a grid of squares
 
     Returns:
         A 3 dimensional array, where the x,y dimensions indicate the
@@ -251,7 +252,7 @@ def create_grid(nrows, ncols, grid_type='square'):
 
     """
     # Initialize the dimensions for the SOM lattice
-    map_coords = np.zeros((nrows, ncols, 2))
+    map_coords = numpy.zeros((nrows, ncols, 2))
 
     if grid_type == 'hex':
         # Height of hexagon is distance from parallel edges
@@ -268,9 +269,9 @@ def create_grid(nrows, ncols, grid_type='square'):
                 # * * * *
                 #  * * * *
                 if i%2 == 0:
-                    map_coords[i-1,j-1] = np.array([(j - 1/2.) * hex_height, i * hex_width_center])
+                    map_coords[i-1,j-1] = numpy.array([(j - 1/2.) * hex_height, i * hex_width_center])
                 else:
-                    map_coords[i-1,j-1] = np.array([(j) * hex_height, i * hex_width_center])
+                    map_coords[i-1,j-1] = numpy.array([(j) * hex_height, i * hex_width_center])
 
     else:
         if grid_type != 'square':
@@ -278,7 +279,7 @@ def create_grid(nrows, ncols, grid_type='square'):
 
         for i in range(nrows):
             for j in range(ncols):
-                map_coords[i,j] = np.array([i,j])
+                map_coords[i,j] = numpy.array([i,j])
 
     return map_coords
 
@@ -289,16 +290,16 @@ def run_som(
 
     Run data through a Self Organizing Map (SOM) algorithm. The SOM
     will return updated weights for the nodes of the map. The algorithm will
-    run over 'niter' iterations, randomly sampling from 'data' rows to find
-    the Best Matching Unit (BMU) in 'som_grid', updating it's neighborhood
+    run over ``niter`` iterations, randomly sampling from ``data`` rows to find
+    the Best Matching Unit (BMU) in ``som_grid``, updating it's neighborhood
     depending on radius and alpha (learning rate)
 
-    Parameters:
-        'data' (2D numpy array) - rows represent a data sample and every
+    Args:
+        data (2D numpy array) - rows represent a data sample and every
             column represents a feature.
             e.g. 3 features, 2 samples: [[0.5, 0.2, 1.0], [0.7, 0.2, 0.0]]
 
-        'som_grid' (3D numpy array) - a representation of the SOM map where
+        som_grid (3D numpy array) - a representation of the SOM map where
             row and column index represent the conceptual space / location
             for each node. The 3rd dimension is the actual cartesian
             x,y location for the node, which is used for calculating
@@ -307,22 +308,22 @@ def run_som(
                 [[[0.5, 1.732], [1.5, 1.732], [2.5, 1.732]],
                  [[1.0, 0.866], [2.0, 0.866], [3.0, 0.866]]]
 
-        'grid_type' (string) - 'hex' or 'square' for how the 2D lattice
+        grid_type (string) - 'hex' or 'square' for how the 2D lattice
             should handle distances and coordinates
 
-        'niter' (int) - the number of iterations to run the algorithm.
+        niter (int) - the number of iterations to run the algorithm.
             Should be a number quite larger than number of data
             samples so that each data sample is seen at least once.
 
-        'radius_param' (float or tuple) - the initial value for the radius
+        radius_param (float or tuple) - the initial value for the radius
             of neighbors that will by default decay to zero. If tuple,
             first element is starting radius, second is ending radius.
 
-        'alpha_param' (float or tuple) - the initial value for the learning
+        alpha_param (float or tuple) - the initial value for the learning
             rate that will by default decay to 0.01. If tuple, first
             element is starting learning rate, second is ending learning rate.
 
-        'keep_dist' (boolean) - whether to keep track of the shortest
+        keep_dist (boolean) - whether to keep track of the shortest
             distances for each data sample to its closest node. If
             True, a list of distances is returned.
 
@@ -361,14 +362,14 @@ def run_som(
     map_cols = som_grid.shape[1]
 
     # Initialized SOM unit weights to be random
-    som_weights = np.random.random((map_rows, map_cols, num_feats))
+    som_weights = numpy.random.random((map_rows, map_cols, num_feats))
 
     # Create a list of None values to store shortest distances
     object_distances = [None] * num_segments
 
     for i in range(niter):
         # Select a training example at random
-        rand_samp_idx = np.random.randint(0, num_segments)
+        rand_samp_idx = numpy.random.randint(0, num_segments)
         rand_samp = data[rand_samp_idx, :].reshape(num_feats, 1)
 
         # Find its Best Matching Unit (BMU)
@@ -377,14 +378,15 @@ def run_som(
         # Track the distances of objects to their corresponding winning unit
         # don't bother with actual Euclidean distance, to avoid expensive sqrt
         # operation
-        dist_tmp = np.sum((bmu - rand_samp) ** 2)
+        dist_tmp = numpy.sum((bmu - rand_samp) ** 2)
         # Saving the BMU for this sample by saving the distance and index
         object_distances[rand_samp_idx] = (dist_tmp, bmu_idx)
 
         # Decay the SOM parameters
         r = decay_func(init_radius, end_radius, i, niter)
         # Decay the learning rate
-        learn_rate = decay_func(init_learning_rate, end_learning_rate, i, niter)
+        learn_rate = decay_func(
+            init_learning_rate, end_learning_rate, i, niter)
 
         # Now we know the BMU, update its weight vector to move closer to input
         # and move its neighbours in 2-D space closer by a factor proportional
@@ -394,10 +396,10 @@ def run_som(
                 # Get the 2-D distance (again, not the actual Euclidean
                 # distance)
                 if grid_type != 'hex':
-                    w_dist = np.sum((np.array([x, y]) - bmu_idx) ** 2)
+                    w_dist = numpy.sum((numpy.array([x, y]) - bmu_idx) ** 2)
                 else:
                     # Distance if hexagonal map:
-                    w_dist = np.sum((som_grid[x, y] - som_grid[bmu_idx[0], bmu_idx[1]]) ** 2)
+                    w_dist = numpy.sum((som_grid[x, y] - som_grid[bmu_idx[0], bmu_idx[1]]) ** 2)
 
                 # If the distance is within the current neighbourhood radius
                 # Since we did not take sqrt of w_dist, square radius r
@@ -424,26 +426,26 @@ def run_som(
 
 
 def cluster_som(som_weights, n_clusters):
-    """Hierarchical clustering algorithm.
+    """Cluster the SOM weights with a hierarchical clustering algorithm.
 
-        Recursively merges the pair of clusters that minimally increases a
-        a given linkage distance.
+    Recursively merges the pair of clusters that minimally increases a
+    a given linkage distance.
 
-        Parameters:
-            som_weights (3D numpy array) - a representation of the SOM map where
-                row and column index represent the conceptual space / location
-                for each node. The 3rd dimension is the actual cartesian
-                x,y location for the node, which is used for calculating
-                distances between nodes.
-                e.g. 2 rows by 3 columns with hexagonal node coordinates
-                    [[[0.5, 1.732], [1.5, 1.732], [2.5, 1.732]],
-                     [[1.0, 0.866], [2.0, 0.866], [3.0, 0.866]]]
+    Args:
+        som_weights (3D numpy array) - a representation of the SOM map where
+            row and column index represent the conceptual space / location
+            for each node. The 3rd dimension is the actual cartesian
+            x,y location for the node, which is used for calculating
+            distances between nodes.
+            e.g. 2 rows by 3 columns with hexagonal node coordinates
+                [[[0.5, 1.732], [1.5, 1.732], [2.5, 1.732]],
+                 [[1.0, 0.866], [2.0, 0.866], [3.0, 0.866]]]
 
-            n_clusters (int) - the number of clusters to group.
+        n_clusters (int) - the number of clusters to group.
 
-        Returns:
-            clustering (sklearn.cluster.AgglomerativeClustering object)
-                - clustering object fit on the data 'som_weights'
+    Returns:
+        clustering (sklearn.cluster.AgglomerativeClustering object)
+            - clustering object fit on the data 'som_weights'
     """
     # Get the number of rows, cols for the som_weight matrix
     rows = som_weights.shape[0]
@@ -463,16 +465,16 @@ def cluster_som(som_weights, n_clusters):
 def fill_bmu_distances(data, som_weights, object_distances=None):
     """Complete all or fill missing Best Matching Units distances.
 
-    Find the BMU distances and BMU index for each data sample in 'data'.
-    Optionally, if 'object_distances' not None then only find the
-    BMU for any missing sample in 'object_distances'.
+    Find the BMU distances and BMU index for each data sample in ``data``.
+    Optionally, if ``object_distances`` not None then only find the
+    BMU for any missing sample in ``object_distances``.
 
-    Parameters:
-        'data' (2D numpy array) - rows represent a data sample and every
+    Args:
+        data (2D numpy array) - rows represent a data sample and every
             column represents a feature.
             e.g. 3 features, 2 samples: [[0.5, 0.2, 1.0], [0.7, 0.2, 0.0]]
 
-        'som_weights' (3D numpy array): a numpy array where the first two
+        som_weights (3D numpy array): a numpy array where the first two
             dimensions are the row, column of the map and the 3rd
             dimension is a vector representing the unit weights
             for that row, col cell. The unit vector weights should have
@@ -480,7 +482,7 @@ def fill_bmu_distances(data, som_weights, object_distances=None):
             [ [ [0.5,1.0,0.3] , [1.0,0.2,0.6] ],
               [ [0.1,0.9,0.9] , [0.7,0.6,0.5] ] ]
 
-        'object_distances' (optional) (list of tuples) - a list of tuples
+        object_distances (optional) (list of tuples) - a list of tuples
             for each data sample. First element in tuple is the
             Euclidean distance from data sample to SOM weight vector of
             the closest BMU and the second element in tuple is the
@@ -491,11 +493,9 @@ def fill_bmu_distances(data, som_weights, object_distances=None):
     Returns:
         A list of tuples for the distances and BMU index of the
         data samples to it's closest SOM weight vector.
-
     """
-
     filled_objects = []
-    if object_distances == None:
+    if object_distances is None:
         num_segments = data.shape[0]
         object_distances = [None] * num_segments
 
@@ -505,54 +505,34 @@ def fill_bmu_distances(data, som_weights, object_distances=None):
     for i, data_samp in enumerate(object_distances):
         sample = object_distances[i]
         if sample is None:
-            none_samp = data[i, :].reshape(np.array([num_feats, 1]))
+            none_samp = data[i, :].reshape(numpy.array([num_feats, 1]))
 
             # find its Best Matching Unit (BMU)
             bmu, bmu_idx = find_bmu(none_samp, som_weights)
 
-            # Track the distances of objects to their corresponding winning unit
-            # don't bother with actual Euclidean distance, to avoid expensive
-            # sqrt operation
-            dist_tmp = np.sum((bmu - none_samp) ** 2)
+            # Track the distances of objects to their corresponding winning
+            # unit don't bother with actual Euclidean distance, to avoid
+            # expensive sqrt operation
+            dist_tmp = numpy.sum((bmu - none_samp) ** 2)
             filled_objects.append((dist_tmp, bmu_idx))
-
         else:
             filled_objects.append(data_samp)
 
     return filled_objects
 
-def map_cluster_to_class(class_df_path, cluster_df_path):
-    """NOT DEVELOPED"""
-    class_df = pandas.read_csv(class_df_path)
-    cluster_df = pandas.read_csv(cluster_df_path)
-    class_df.columns = class_df.columns.str.lower()
-
-    merged_df = class_df.merge(cluster_df, how="left", left_index=True, right_index=True)
-    cluster_list = cluster_df['cluster'].tolist()
-    unique_clusters = np.unique(cluster_list)
-    print(unique_clusters)
-
-    cluster_to_class_map = {}
-    for clust in unique_clusters:
-        result = merged_df[merged_df['cluster']==clust].groupby('class').size().reset_index(name='counts')
-        print(clust)
-        print(result)
-
-    return None
-
 def save_cluster_results(
     dframe, results_path, cluster_labels, grid_dim, object_distances):
     """Determine the cluster assignment for each data sample and save to CSV.
 
-    Parameters:
-        'dframe' (pandas df) - dataframe of the data samples.
-        'results_path' (string) - path on disk to save the CSV with
+    Args:
+        dframe (pandas df) - dataframe of the data samples.
+        results_path (string) - path on disk to save the CSV with
             column name 'cluster' for cluster number assignment to
             each data sample from 'dframe'.
-        'cluster_labels' (numpy array) - array of assigned cluster labels
-            from 'labels_' attribute returned from somutils.cluster_som
-        'grid_dim' (tuple) - row, col dimension of the SOM map / lattice
-        'object_distances' (list of tuples) -  a list of tuples
+        cluster_labels (numpy array) - array of assigned cluster labels
+            from 'labels_' attribute returned from ``somutils.cluster_som``
+        grid_dim (tuple) - row, col dimension of the SOM map / lattice
+        object_distances (list of tuples) -  a list of tuples
             for each data sample. First element in tuple is the
             Euclidean distance from data sample to SOM weight vector of
             the closest BMU and the second element in tuple is the
@@ -594,18 +574,18 @@ def basic_som_figure(
     creation of the SOM lattice. Will also color the plot based on
     clustered labels and plot the data sample index if dataframe provided.
 
-    Parameters:
-        'data' (2D numpy array) - rows represent a data sample and every
+    Args:
+        data (2D numpy array) - rows represent a data sample and every
             column represents a feature.
             e.g. 3 features, 2 samples: [[0.5, 0.2, 1.0], [0.7, 0.2, 0.0]]
-        'som_weights' (3D numpy array) - a numpy array where the first two
+        som_weights (3D numpy array) - a numpy array where the first two
             dimensions are the row, column of the map and the 3rd
             dimension is a vector representing the unit weights
             for that row, col cell. The unit vector weights should have
             the same length as the 'target' vector. e.g.
             [ [ [0.5,1.0,0.3] , [1.0,0.2,0.6] ],
               [ [0.1,0.9,0.9] , [0.7,0.6,0.5] ] ]
-        'map_coords' (3D numpy array) - a representation of the SOM map where
+        map_coords (3D numpy array) - a representation of the SOM map where
                 row and column index represent the conceptual space / location
                 for each node. The 3rd dimension is the actual cartesian
                 x,y location for the node, which is used for calculating
@@ -613,60 +593,58 @@ def basic_som_figure(
                 e.g. 2 rows by 3 columns with hexagonal node coordinates
                     [[[0.5, 1.732], [1.5, 1.732], [2.5, 1.732]],
                      [[1.0, 0.866], [2.0, 0.866], [3.0, 0.866]]]
-        'cluster_labels' (numpy array) - a numpy array of integers of the
+        cluster_labels (numpy array) - a numpy array of integers of the
             assigned clusters to the SOM map.
-        'grid' (string) - 'hex' or 'square'. The grid type that was used when
+        grid (string) - 'hex' or 'square'. The grid type that was used when
             creating the SOM map/lattice.
-        'figure_path' (string) - a path on disk to save the plotted figure to.
-        'dframe' (pandas dataframe) (optional) - dataframe of the data
-            samples. This is different from 'data' in that it can include a
+        figure_path (string) - a path on disk to save the plotted figure to.
+        dframe (pandas dataframe) (optional) - dataframe of the data
+            samples. This is different from ``data`` in that it can include a
             proper dataframe index, as well as other non data columns that
             could be useful when plotting. When provided, used to plot the
             dataframe index (data sample index) onto the plotted SOM in the
             location of that data samples BMU.
-        'class_name' (string) (optional) - column name found in 'dframe' that
+        class_name (string) (optional) - column name found in ``dframe`` that
             indicates an integer column of known classifications for data
             samples. If present will plot the data samples id's in a color
             based on the classification integer.
 
     Returns:
-        Saves the plot to 'figure_path' and returns the Pyplot.
-
+        Saves the plot to ``figure_path`` and returns the Pyplot.
     """
     default_colors = [
         'blue', 'green', 'red', 'cyan', 'magenta', 'yellow', 'black', 'white']
 
     x_loc = map_coords[:,:,0]
     y_loc = map_coords[:,:,1]
-    #cm_subsection = np.linspace(0, 1, 193)
 
     if grid == 'hex':
         # Compute radius
         hex_radius = 2 / math.sqrt(3) * 0.5
         fig, axs = plt.subplots(ncols=1)
         axs.set_aspect('equal')
+        # Index for ``cluster_labels`` whose value will be a cluster number
+        # 0 - 8, which will then be used to index into ``default_colors``
         color_idx = 0
         patch_collection = []
+        # create hex grid polygons for plot
         for xc, yc, in zip(x_loc.flatten(), y_loc.flatten()):
             group = cluster_labels[color_idx]
-            #print(group)
-            #print(color_idx)
             hex = patches.RegularPolygon(
-                (xc,yc), numVertices=6, radius=hex_radius, alpha=0.5,
-                edgecolor='k', facecolor=default_colors[group])
+                (xc,yc), numVertices = 6, radius = hex_radius, alpha = 0.5,
+                edgecolor = 'k', facecolor = default_colors[group])
             axs.add_patch(hex)
-            color_idx+=1
+            color_idx += 1
 
-        xmin = np.min(x_loc)
-        xmax = np.max(x_loc)
-        ymin = np.min(y_loc)
-        ymax = np.max(y_loc)
+        xmin = numpy.min(x_loc)
+        xmax = numpy.max(x_loc)
+        ymin = numpy.min(y_loc)
+        ymax = numpy.max(y_loc)
         axs.set_xlim(xmin - 1.0, xmax + 1.0)
         axs.set_ylim(ymin - 1.0, ymax + 1.0)
 
         legend_patch = []
-        print(np.unique(cluster_labels))
-        for item in np.unique(cluster_labels):
+        for item in numpy.unique(cluster_labels):
             item_patch = patches.Patch(
                 color=default_colors[item], label='Cluster %s' % item)
             legend_patch.append(item_patch)
@@ -678,34 +656,31 @@ def basic_som_figure(
 
     if dframe is not None:
         num_segments = data.shape[0]
-        print("num segs: ", num_segments)
         num_feats = data.shape[1]
         dframe_index_list = dframe.index.values.tolist()
-        print("len of dframe: ", len(dframe_index_list))
 
         if class_name is not None:
             class_values = dframe[class_name].tolist()
-            unique_classes = np.unique(class_values)
+            unique_classes = numpy.unique(class_values)
             cmap_name = 'tab10'
             cmap = plt.get_cmap(cmap_name)
             classes_norm = colors.Normalize(
-                vmin=np.min(unique_classes), vmax=np.max(unique_classes))
+                vmin=numpy.min(unique_classes), vmax=numpy.max(unique_classes))
 
             text_colors = [
                 "blue", "yellow", "orange", "red", "green", "purple"]
 
         for i in range(num_segments):
-            t = data[i, :].reshape(np.array([num_feats, 1]))
-            #id = dframe.loc[i, idfield]
+            t = data[i, :].reshape(numpy.array([num_feats, 1]))
             id = dframe_index_list[i]
 
             # find its Best Matching Unit (BMU)
             bmu, bmu_idx = find_bmu(t, som_weights)
             x_cord = map_coords[bmu_idx[0], bmu_idx[1], 0]
             y_cord = map_coords[bmu_idx[0], bmu_idx[1], 1]
-            #print x_cord, y_cord
-            x_cord = x_cord + np.random.normal(0.0, 0.1)
-            y_cord = y_cord + np.random.normal(0.0, 0.1)
+            # offset the location of the labels so they're not overlapping
+            x_cord = x_cord + numpy.random.normal(0.0, 0.1)
+            y_cord = y_cord + numpy.random.normal(0.0, 0.1)
             if class_name is not None:
                 class_val = class_values[i]
                 #axs.text(x_cord, y_cord, s=id, color=cmap(classes_norm(class_val)))
@@ -716,118 +691,31 @@ def basic_som_figure(
     plt.savefig(figure_path)
     return plt
 
-def create_som_figure(
-    data, segment_df, som_weights, map_coords, cluster_labels, grid):
-    """
-    """
-    color_map = ['blue', 'red', 'black', 'cyan', 'green', 'magenta', 'white']
-    #fig = plt.figure()
-    x_loc = map_coords[:,:,0]
-    y_loc = map_coords[:,:,1]
-    #cm_subsection = np.linspace(0, 1, 193)
-
-    if grid == 'hex':
-        # Compute radius
-        hex_radius = 2 / math.sqrt(3) * 0.5
-        fig, axs = plt.subplots(ncols=1)
-        axs.set_aspect('equal')
-        color_idx = 0
-        patch_collection = []
-        for xc, yc, in zip(x_loc.flatten(), y_loc.flatten()):
-            group = cluster_labels[color_idx]
-            hex = patches.RegularPolygon(
-                (xc,yc), numVertices=6, radius=hex_radius, alpha=0.5,
-                edgecolor='k', facecolor=color_map[group])
-            #print(hex.get_path())
-            #print(hex.get_patch_transform())
-            #print(hex.xy)
-            #sys.exit()
-            axs.add_patch(hex)
-            color_idx+=1
-        #print(axs.patches)
-
-        # NOTE: might be able to draw boundary line around clusters by
-        # iterating over each hexagon, getting its neighbours and
-        # depending on if a neighbor is a different cluster, draw a line along
-        # that path segment, by getting the patch path. Maybe keep a list
-        # of path segments drawn so they aren't drawn twice
-        #sys.exit()
-        xmin = np.min(x_loc)
-        xmax = np.max(x_loc)
-        ymin = np.min(y_loc)
-        ymax = np.max(y_loc)
-        axs.set_xlim(xmin - 1.0, xmax + 1.0)
-        axs.set_ylim(ymin - 1.0, ymax + 1.0)
-
-
-        #axs.scatter(x_loc.flatten(), y_loc.flatten())
-        num_segments = data.shape[0]
-        num_feats = data.shape[1]
-
-        regime_colors = ["blue", "yellow", "orange", "red", "green", "purple"]
-
-        dframe_index_list = segment_df.index.values.tolist()
-
-        for i in range(num_segments):
-            t = data[i, :].reshape(np.array([num_feats, 1]))
-            #regime_type = segment_df.iloc[i, 5]
-            #id = segment_df.iloc[i, 0]
-
-            regime_type = segment_df.iloc[i, 4]
-            id = dframe_index_list[i]
-
-            # find its Best Matching Unit (BMU)
-            bmu, bmu_idx = find_bmu(t, som_weights, num_feats)
-            x_cord = map_coords[bmu_idx[0], bmu_idx[1], 0]
-            y_cord = map_coords[bmu_idx[0], bmu_idx[1], 1]
-            #print x_cord, y_cord
-            x_cord = x_cord + np.random.normal(0.0, 0.1)
-            y_cord = y_cord + np.random.normal(0.0, 0.1)
-            axs.text(x_cord, y_cord, s=id, color=regime_colors[regime_type - 1])
-
-        plt.show()
-
-    else:
-        for i in range(num_segments):
-            t = data[i, :].reshape(np.array([num_feats, 1]))
-            regime_type = segment_df.iloc[i, 5]
-
-            # find its Best Matching Unit (BMU)
-            bmu, bmu_idx = find_bmu(t, som_weights)
-            #print bmu, bmu_idx
-            x_loc.append(bmu_idx[0])
-            y_loc.append(bmu_idx[1])
-            color_loc.append(color_map[regime_type - 1])
-
-        plt.scatter(x_loc, y_loc)
-        plt.grid(True)
-        plt.show()
-
 def save_som_model(som_weights, som_path, grid_type, cluster=None):
     """Save SOM model in a text file with SOM creation information.
 
     Saves the SOM as a .txt. The SOM is flattened, meaning that the
     SOM weights are saved as a 1D array. In order to reconstruct the
     SOM weights, the original numpy shape and grid type are saved in
-    the footer of the txt file to be read in by somutils.load_som_model.
+    the footer of the txt file to be read in by ``somutils.load_som_model``.
 
-    Parameters:
-        'som_weights' (3D numpy array) - a numpy array where the first two
+    Args:
+        som_weights (3D numpy array) - a numpy array where the first two
             dimensions are the row, column of the map and the 3rd
             dimension is a vector representing the unit weights
             for that row, col cell. The unit vector weights should have
             the same length as the 'target' vector. e.g.
             [ [ [0.5,1.0,0.3] , [1.0,0.2,0.6] ],
               [ [0.1,0.9,0.9] , [0.7,0.6,0.5] ] ]
-        'som_path' (string) - a path on disk to save the model to as a txt
+        som_path (string) - a path on disk to save the model to as a txt
             file. Path should end with a '.txt' extension.
-        'grid_type' (string) - 'hex' or 'square'. The grid type that was used
+        grid_type (string) - 'hex' or 'square'. The grid type that was used
             when creating the SOM map/lattice.
-        'cluster' (int) (optional) - number of clusters used when originally
+        cluster (int) (optional) - number of clusters used when originally
             clustering the SOM.
+
     Returns:
         Nothing
-
     """
     som_shape = som_weights.shape
 
@@ -838,7 +726,7 @@ def save_som_model(som_weights, som_path, grid_type, cluster=None):
     else:
         footer_info = f"shape: {som_shape}, grid_type: {grid_type}, cluster: {cluster}"
 
-    np.savetxt(som_path, som_flattened, footer=footer_info)
+    numpy.savetxt(som_path, som_flattened, footer=footer_info)
 
 def load_som_model(som_model_path):
     """Load a saved SOM model.
@@ -847,18 +735,18 @@ def load_som_model(som_model_path):
     the footer of the text file. Returns the reconstructed model as well
     as the details saved in the footer of the text file.
 
-    Parameters:
-        'som_model_path' (string) - the path on disk to the saved text file
+    Args:
+        som_model_path (string) - the path on disk to the saved text file
             of the SOM model.
 
     Returns:
         A tuple (som_model, som_details)
-        'som_model' (3D numpy array) - the reconstructed SOM.
-        'som_details' (dictionary) - the information saved in the footer
+        som_model (3D numpy array) - the reconstructed SOM.
+        som_details (dictionary) - the information saved in the footer
             of text file with keys: 'shape', 'grid_type', and 'cluster'
     """
 
-    som_model_flat = np.loadtxt(som_model_path)
+    som_model_flat = numpy.loadtxt(som_model_path)
     # Read in footer details that are tagged on all saved som models
     footer_details = ""
     with open(som_model_path, 'r') as fh:
@@ -877,4 +765,22 @@ def load_som_model(som_model_path):
 
     return som_model_full, som_details
 
+def map_cluster_to_class(class_df_path, cluster_df_path):
+    """NOT DEVELOPED"""
+#    class_df = pandas.read_csv(class_df_path)
+#    cluster_df = pandas.read_csv(cluster_df_path)
+#    class_df.columns = class_df.columns.str.lower()
+#
+#    merged_df = class_df.merge(cluster_df, how="left", left_index=True, right_index=True)
+#    cluster_list = cluster_df['cluster'].tolist()
+#    unique_clusters = numpy.unique(cluster_list)
+#    print(unique_clusters)
+#
+#    cluster_to_class_map = {}
+#    for clust in unique_clusters:
+#        result = merged_df[merged_df['cluster']==clust].groupby('class').size().reset_index(name='counts')
+#        print(clust)
+#        print(result)
+
+    return None
 
