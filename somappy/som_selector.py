@@ -4,7 +4,7 @@ import sys
 import pandas as pd
 import numpy as np
 
-import somutils
+from . import somutils
 
 """ Som Pre Processer Model """
 def execute(args):

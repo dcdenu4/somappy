@@ -14,7 +14,7 @@ matplotlib.use('TkAgg')
 #printsq = sg.Print
 #sg.ChangeLookAndFeel('GreenTan')
 
-import som_selector
+from . import som_selector
 
 def draw_figure(canvas, figure, loc=(0, 0)):
     """ Draw a matplotlib figure onto a Tk canvas
@@ -76,84 +76,87 @@ SETTINGS_KEYS_TO_SAVE = [
     '_output_dir_path_', '_som_input_path_', '_som_params_path_', '_columns_',
     '_rows_', '_iterations_', '_grid_type_', '_number_clusters_']
 
-validated = False
+def main():
+    validated = False
 
-menu_def = [['File', ['Load', 'Save', 'Exit',]]]
+    menu_def = [['File', ['Load', 'Save', 'Exit',]]]
 
-layout = [
-    [sg.Menu(menu_def)],
-    [sg.Text('SOM Selector Tool', size=(30, 1), font=("Helvetica", 14))],
-    [sg.Text('_'  * 100, size=(70, 1))],
-    [sg.Text('Workspace:', size=(25, 1), auto_size_text=True, justification='right'),
-        sg.InputText(do_not_clear=True, key="_output_dir_path_"),
-        sg.FolderBrowse(target = '_output_dir_path_')],
-    [sg.Text('_'  * 100, size=(70, 1))],
-    [sg.Text('SOM Input Features:', size=(25, 1), auto_size_text=True, justification='right'),
-        sg.InputText(do_not_clear=True, key="_som_input_path_"),
-        sg.FileBrowse(target = '_som_input_path_')],
-    [sg.Text('SOM Parameters:', size=(25, 1), auto_size_text=True, justification='right'),
-        sg.InputText(do_not_clear=True, key='_som_params_path_'),
-        sg.FileBrowse(target = '_som_params_path_')],
-    [sg.Text('SOM Columns:', size=(25, 1), auto_size_text=True, justification='right'),
-        sg.InputText(do_not_clear=True, key='_columns_')],
-    [sg.Text('SOM Rows:', size=(25, 1), auto_size_text=True, justification='right'),
-        sg.InputText(do_not_clear=True, key='_rows_')],
-    [sg.Text('SOM Iterations:', size=(25, 1), auto_size_text=True, justification='right'),
-        sg.InputText(default_text='500', do_not_clear=True, key='_iterations_')],
-    [sg.Text('SOM Grid Type:', size=(25, 1), auto_size_text=True, justification='right'),
-        sg.InputCombo(['hex', 'square'], default_value=0, key='_grid_type_')],
-    [sg.Text('Number of Clusters:', size=(25, 1), auto_size_text=True, justification='right'),
-        sg.InputText(do_not_clear=True, key='_number_clusters_')],
+    layout = [
+        [sg.Menu(menu_def)],
+        [sg.Text('SOM Selector Tool', size=(30, 1), font=("Helvetica", 14))],
+        [sg.Text('_'  * 100, size=(70, 1))],
+        [sg.Text('Workspace:', size=(25, 1), auto_size_text=True, justification='right'),
+            sg.InputText(do_not_clear=True, key="_output_dir_path_"),
+            sg.FolderBrowse(target = '_output_dir_path_')],
+        [sg.Text('_'  * 100, size=(70, 1))],
+        [sg.Text('SOM Input Features:', size=(25, 1), auto_size_text=True, justification='right'),
+            sg.InputText(do_not_clear=True, key="_som_input_path_"),
+            sg.FileBrowse(target = '_som_input_path_')],
+        [sg.Text('SOM Parameters:', size=(25, 1), auto_size_text=True, justification='right'),
+            sg.InputText(do_not_clear=True, key='_som_params_path_'),
+            sg.FileBrowse(target = '_som_params_path_')],
+        [sg.Text('SOM Columns:', size=(25, 1), auto_size_text=True, justification='right'),
+            sg.InputText(do_not_clear=True, key='_columns_')],
+        [sg.Text('SOM Rows:', size=(25, 1), auto_size_text=True, justification='right'),
+            sg.InputText(do_not_clear=True, key='_rows_')],
+        [sg.Text('SOM Iterations:', size=(25, 1), auto_size_text=True, justification='right'),
+            sg.InputText(default_text='500', do_not_clear=True, key='_iterations_')],
+        [sg.Text('SOM Grid Type:', size=(25, 1), auto_size_text=True, justification='right'),
+            sg.InputCombo(['hex', 'square'], default_value=0, key='_grid_type_')],
+        [sg.Text('Number of Clusters:', size=(25, 1), auto_size_text=True, justification='right'),
+            sg.InputText(do_not_clear=True, key='_number_clusters_')],
 
-    [sg.Text('', text_color=None, background_color=None, size=(70, 1), key='_success_message_')],
-    [sg.Submit(), sg.Cancel(key='_cancel_')]]
+        [sg.Text('', text_color=None, background_color=None, size=(70, 1), key='_success_message_')],
+        [sg.Submit(), sg.Cancel(key='_cancel_')]]
 
-window = sg.Window('SOM Selector Tool', auto_size_text=True, default_element_size=(40, 1)).Layout(layout)
+    window = sg.Window('SOM Selector Tool', auto_size_text=True, default_element_size=(40, 1)).Layout(layout)
 
-# Event Loop
-while True:
-    event, values = window.Read()
-    if event is None:
-        break
-    if event == '_cancel_':
-        break
-    if event == 'Submit':
-        try:
-            # TODO: Should try to validate file inputs first
-            results = som_selector.execute(values)
-            som_fig = results['som_figure']
-            som_model_path = results['model_weights_path']
-            show_figure(som_fig, som_model_path)
-            #print(values)
-            pass
-        except:
-            print("Unexpected error:", sys.exc_info()[0])
-            raise
-        window.FindElement('_success_message_').Update(text_color="#24b73d")
-        window.FindElement('_success_message_').Update('The Model Completed Successfully')
-        window.FindElement('_cancel_').Update('Close')
-    if event == 'Save':
-        save_path = sg.PopupGetFile(
-            'Select a file path to save window parameters.',
-            default_extension = '.json', file_types = (("JSON Files", "*.json"),),
-            no_window = True, save_as = True)
-        if save_path != '':
-            save_key_dict = {}
-            for key, val in values.items():
-                if key in SETTINGS_KEYS_TO_SAVE:
-                    save_key_dict[key] = val
-            with open(save_path, 'w') as fp:
-                json.dump(save_key_dict, fp)
-    if event == 'Load':
-        load_path = sg.PopupGetFile(
-            'Select the Window Parameters to Load.',
-            default_extension = '.json', file_types = (("JSON Files", "*.json"),),
-            no_window = True)
-        if load_path != '':
-            #window.LoadFromDisk(load_path)
-            with open(load_path, 'r') as fp:
-                values = json.load(fp)
-                print(values)
-                window.Fill(values)
-print("Done.")
+    # Event Loop
+    while True:
+        event, values = window.Read()
+        if event is None:
+            break
+        if event == '_cancel_':
+            break
+        if event == 'Submit':
+            try:
+                # TODO: Should try to validate file inputs first
+                results = som_selector.execute(values)
+                som_fig = results['som_figure']
+                som_model_path = results['model_weights_path']
+                show_figure(som_fig, som_model_path)
+                #print(values)
+                pass
+            except:
+                print("Unexpected error:", sys.exc_info()[0])
+                raise
+            window.FindElement('_success_message_').Update(text_color="#24b73d")
+            window.FindElement('_success_message_').Update('The Model Completed Successfully')
+            window.FindElement('_cancel_').Update('Close')
+        if event == 'Save':
+            save_path = sg.PopupGetFile(
+                'Select a file path to save window parameters.',
+                default_extension = '.json', file_types = (("JSON Files", "*.json"),),
+                no_window = True, save_as = True)
+            if save_path != '':
+                save_key_dict = {}
+                for key, val in values.items():
+                    if key in SETTINGS_KEYS_TO_SAVE:
+                        save_key_dict[key] = val
+                with open(save_path, 'w') as fp:
+                    json.dump(save_key_dict, fp)
+        if event == 'Load':
+            load_path = sg.PopupGetFile(
+                'Select the Window Parameters to Load.',
+                default_extension = '.json', file_types = (("JSON Files", "*.json"),),
+                no_window = True)
+            if load_path != '':
+                #window.LoadFromDisk(load_path)
+                with open(load_path, 'r') as fp:
+                    values = json.load(fp)
+                    print(values)
+                    window.Fill(values)
+    print("Done.")
 
+if __name__=="__main__":
+    main()
