@@ -1,23 +1,27 @@
 import os
 import sys
+import logging
 
 import pandas as pd
 import numpy as np
 
 from . import somutils
 
+LOGGER = logging.getLogger(__name__)
+
 """ Som Pre Processer Model """
 def execute(args):
-    """
-    
-    '_output_dir_path_'
-    '_som_input_path_'
-    '_som_params_path_'
-    '_columns_'
-    '_rows_'
-    '_iterations_'
-    '_grid_type_'
-    '_number_clusters_'
+    """Run a SOM configuration.
+
+    Args:
+        args['_output_dir_path_'] (string): 
+        args['_data_input_path_'] (string): 
+        args['_data_columns_excluded_'] (string): 
+        args['_columns_'] (int): 
+        args['_rows_'] (int): 
+        args['_iterations_'] (int): 
+        args['_grid_type_'] (string): 
+        args['_number_clusters_'] (int): 
 
     return - dictionary with the following key, values
         'model_weights_path': path to saved .txt weights
@@ -26,30 +30,31 @@ def execute(args):
     workspace_dir = args['_output_dir_path_']
     if not os.path.isdir(workspace_dir):
         os.mkdir(workspace_dir)
-    
-    data_path = args['_som_input_path_']
-    som_params_path = args['_som_params_path_']
-    
+
+    data_path = args['_data_input_path_']
+
     data_dataframe = pd.read_csv(data_path)
     data_dataframe.columns = data_dataframe.columns.str.lower()
 
+    excluded_columns = [col.lower() for col in args['_data_columns_excluded_'].split(',')]
+
+    selected_features = list(set(data_dataframe.columns) ^ set(excluded_columns))
+
     # List of columns to include as input into SOM
-    selected_features = ["S", "VC", "VC_rat", "ER", "WtoD", "IR", "d50", 
-                         "d84_d16", "nBars", "nFCs", "pArmor", "SSP", "SSP_bal"]
-                         
+    #selected_features = ["S", "VC", "VC_rat", "ER", "WtoD", "IR", "d50",
+    #                     "d84_d16", "nBars", "nFCs", "pArmor", "SSP", "SSP_bal"]
+
     validation_class_feat = ["class"]
-    
-    selected_features_lower = [x.lower() for x in selected_features]
-    
+
     #selected_features_sorted = selected_features_lower.sort()
     #tmp_df_cols = data_dataframe.columns
     #tmp_df_cols.sort()
-    
-    # The number of features for the SOM                     
-    num_feats = len(selected_features_lower)  
+
+    # The number of features for the SOM
+    num_feats = len(selected_features)
 
     # Get only the data from the features of interest
-    selected_data_feats_df = data_dataframe.loc[:, selected_features_lower]
+    selected_data_feats_df = data_dataframe.loc[:, selected_features]
     #print(selected_data_feats_df.head(n=50))
     # Handle NODATA / Missing data by removing (for now)
     selected_data_feats_df.dropna(how='any', inplace=True)
@@ -64,13 +69,13 @@ def execute(args):
     # Initial learning rate for SOM. Will decay to 0.01 linearly
     init_learning_rate = 0.05
 
-    # The number of rows for the grid and number of columns. This dictates 
-    # how many nodes the SOM will consist of. Currently not calculated 
+    # The number of rows for the grid and number of columns. This dictates
+    # how many nodes the SOM will consist of. Currently not calculated
     # using PCA or other analyses methods.
     nrows = int(args['_rows_'])
     ncols = int(args['_columns_'])
     grid_type = args['_grid_type_']
-    
+
     # Create the SOM grid (which initializes the SOM network)
     som_grid = somutils.create_grid(nrows, ncols, grid_type=grid_type)
 
@@ -108,15 +113,15 @@ def execute(args):
     # Let's save the clusters corresponding to the samples now
     results_path = os.path.join(workspace_dir, 'cluster_results.csv')
     somutils.save_cluster_results(
-        selected_data_feats_df, results_path, clustering.labels_, 
+        selected_data_feats_df, results_path, clustering.labels_,
         (nrows, ncols), object_distances)
-    # Display the SOM, coloring the nodes into different clusters from 
+    # Display the SOM, coloring the nodes into different clusters from
     # 'clustering' above
-    # Optional: pass in original dataframe to plot 
+    # Optional: pass in original dataframe to plot
     # the IDs onto their respective nodes
     som_figure_path = os.path.join(workspace_dir, 'som_figure.jpg')
     plt = somutils.basic_som_figure(
-        data, som_weights, som_grid, clustering.labels_, grid_type, 
+        data, som_weights, som_grid, clustering.labels_, grid_type,
         som_figure_path, dframe=data_dataframe, class_name='class')
-                                
+
     return {'model_weights_path':som_model_weights_path, 'som_figure':plt.gcf()}
