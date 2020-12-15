@@ -2,8 +2,7 @@ import os
 import sys
 import logging
 
-import pandas as pd
-import numpy as np
+import pandas
 
 from . import somutils
 
@@ -14,57 +13,66 @@ def execute(args):
     """Run a SOM configuration.
 
     Args:
-        args['_output_dir_path_'] (string): 
-        args['_data_input_path_'] (string): 
-        args['_data_columns_excluded_'] (string): 
-        args['_columns_'] (int): 
-        args['_rows_'] (int): 
-        args['_iterations_'] (int): 
-        args['_grid_type_'] (string): 
-        args['_number_clusters_'] (int): 
+        args['_output_dir_path_'] (string): path to a directory to save SOM 
+            model outputs.
+        args['_data_input_path_'] (string): path to a CSV file with the data
+            to use in the SOM. Each row is a sample and each column is a 
+            feature.
+        args['_data_columns_excluded_'] (string): comma separated list of 
+            columns from ``_data_input_path`` that should not be used as
+            features in the SOM.
+        args['_columns_'] (int): number of columns for the SOM model grid.
+        args['_rows_'] (int): number of rows for the SOM model grid.
+        args['_iterations_'] (int): number of iterations to run the SOM.
+        args['_grid_type_'] (string): either 'hex' or 'square' for how the 
+            SOM grid is interpeted and how distances are calculated.
+        args['_number_clusters_'] (int): the number of clusters to sort the 
+            output SOM weights into.
 
-    return - dictionary with the following key, values
-        'model_weights_path': path to saved .txt weights
-        'som_figure': pyplot figure of trained SOM
+    Returns:
+        Dictionary:
+            'model_weights_path': path to a saved .txt with SOM weights
+            'som_figure': pyplot figure of trained SOM
     """
     workspace_dir = args['_output_dir_path_']
     if not os.path.isdir(workspace_dir):
-        os.mkdir(workspace_dir)
+        os.makedirs(workspace_dir)
 
     data_path = args['_data_input_path_']
 
-    data_dataframe = pd.read_csv(data_path)
+    data_dataframe = pandas.read_csv(data_path)
     data_dataframe.columns = data_dataframe.columns.str.lower()
 
+    LOGGER.info(f"Input data columns lowercase: {data_dataframe.columns}")
     excluded_columns = [col.lower() for col in args['_data_columns_excluded_'].split(',')]
+    LOGGER.info(f"Data columns to exclude: {excluded_columns}")
 
     selected_features = list(set(data_dataframe.columns) ^ set(excluded_columns))
+    LOGGER.info(f"SOM data column features: {selected_features}")
 
-    # List of columns to include as input into SOM
-    #selected_features = ["S", "VC", "VC_rat", "ER", "WtoD", "IR", "d50",
-    #                     "d84_d16", "nBars", "nFCs", "pArmor", "SSP", "SSP_bal"]
-
-    validation_class_feat = ["class"]
-
-    #selected_features_sorted = selected_features_lower.sort()
-    #tmp_df_cols = data_dataframe.columns
-    #tmp_df_cols.sort()
+    ## NOT IMPLEMENTED ##
+    # Should be an input text box in GUI that takes a string for col name
+    #validation_class_feat = ["class"]
 
     # The number of features for the SOM
     num_feats = len(selected_features)
 
     # Get only the data from the features of interest
     selected_data_feats_df = data_dataframe.loc[:, selected_features]
-    #print(selected_data_feats_df.head(n=50))
+    LOGGER.debug(selected_data_feats_df.head(n=5))
+    LOGGER.info(f"Number of samples: {selected_data_feats_df.shape[0]}")
     # Handle NODATA / Missing data by removing (for now)
     selected_data_feats_df.dropna(how='any', inplace=True)
-    #print(selected_data_feats_df.head(n=50))
+    LOGGER.info(
+        "Number of samples after removing missing values:"
+        f" {selected_data_feats_df.shape[0]}")
 
     # NORMALIZE DATA by min, max normalization approach
     selected_feats_df_norm = somutils.normalize(selected_data_feats_df)
 
     # Display statistics on our normalized data
-    print(selected_feats_df_norm.describe())
+    LOGGER.info("Normalized data stats:")
+    LOGGER.info(selected_feats_df_norm.describe())
 
     # Initial learning rate for SOM. Will decay to 0.01 linearly
     init_learning_rate = 0.05
@@ -97,13 +105,13 @@ def execute(args):
     som_weights, object_distances = somutils.run_som(
         data, som_grid, grid_type, niter, init_radius, init_learning_rate)
     # Save SOM model. This is done by saving the weights (numpy ndarray)
-    som_model_weights_path = os.path.join(workspace_dir, 'som_model.txt')
+    som_model_weights_path = os.path.join(
+        workspace_dir, 'som_model_weights.txt')
     somutils.save_som_model(
         som_weights, som_model_weights_path, grid_type, cluster=nclusters)
-    #np.save(som_model_weights_path, som_weights)
 
-    # It's possible that some data samples were not selected for training, thus do
-    # do not have a latest bmu
+    # It's possible that some data samples were not selected for training,
+    # and do not have a latest BMU (best matching unit)
     object_distances = somutils.fill_bmu_distances(
         data, som_weights, object_distances)
 
@@ -117,11 +125,13 @@ def execute(args):
         (nrows, ncols), object_distances)
     # Display the SOM, coloring the nodes into different clusters from
     # 'clustering' above
-    # Optional: pass in original dataframe to plot
-    # the IDs onto their respective nodes
+    ## NOT IMLEMENTED keep ``class_name=None``##
+    ## Optional: pass in original dataframe to plot the IDs onto their 
+    ## respective nodes
     som_figure_path = os.path.join(workspace_dir, 'som_figure.jpg')
     plt = somutils.basic_som_figure(
         data, som_weights, som_grid, clustering.labels_, grid_type,
-        som_figure_path, dframe=data_dataframe, class_name='class')
+        som_figure_path, dframe=data_dataframe, class_name=None)
 
-    return {'model_weights_path':som_model_weights_path, 'som_figure':plt.gcf()}
+    return {
+        'model_weights_path':som_model_weights_path, 'som_figure':plt.gcf()}
