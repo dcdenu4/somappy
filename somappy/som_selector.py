@@ -42,12 +42,16 @@ def execute(args):
 
     data_dataframe = pandas.read_csv(data_path)
     data_dataframe.columns = data_dataframe.columns.str.lower()
+    data_columns = data_dataframe.columns.values
 
-    LOGGER.info(f"Input data columns lowercase: {data_dataframe.columns}")
-    excluded_columns = [col.lower() for col in args['_data_columns_excluded_'].split(',')]
+    LOGGER.info(f"Input data columns lowercase: {data_columns}")
+    excluded_columns = []
+    if len(args['_data_columns_excluded_']) > 0:
+        excluded_columns = [col.lower().strip() for col in args['_data_columns_excluded_'].split(',')]
     LOGGER.info(f"Data columns to exclude: {excluded_columns}")
 
-    selected_features = list(set(data_dataframe.columns) ^ set(excluded_columns))
+    # Remove excluded columns from operable features.
+    selected_features = list(set(data_columns) ^ set(excluded_columns))
     LOGGER.info(f"SOM data column features: {selected_features}")
 
     ## NOT IMPLEMENTED ##
@@ -60,6 +64,15 @@ def execute(args):
     # Get only the data from the features of interest
     selected_data_feats_df = data_dataframe.loc[:, selected_features]
     LOGGER.debug(selected_data_feats_df.head(n=5))
+
+    # Check to make sure feature columns are numeric
+    non_numeric_cols_df = selected_data_feats_df.select_dtypes(exclude=['number'])
+    if not non_numeric_cols_df.empty:
+        raise ValueError(
+            "SOM features must be numeric. The following feature columns were"
+            f" not: {non_numeric_cols_df.columns.values}. Please add these"
+            " to the excluded list.")
+
     LOGGER.info(f"Number of samples: {selected_data_feats_df.shape[0]}")
     # Handle NODATA / Missing data by removing (for now)
     selected_data_feats_df.dropna(how='any', inplace=True)

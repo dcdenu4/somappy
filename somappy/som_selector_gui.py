@@ -25,7 +25,7 @@ LOG_FMT = (
 LOGGER = logging.getLogger(__name__)
 root_logger = logging.getLogger()
 
-handler = loggging.StreamHandler(sys.stdout)
+handler = logging.StreamHandler(sys.stdout)
 formatter = logging.Formatter(fmt=LOG_FMT, datefmt='%m/%d/%Y %H:%M:%S ')
 handler.setFormatter(formatter)
 logging.basicConfig(level=logging.INFO, handlers=[handler])
